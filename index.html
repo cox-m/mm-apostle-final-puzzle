@@ -553,7 +553,7 @@
             
             // Function to normalize a string for comparison (lowercase, no spaces or punctuation)
             const normalizeString = (str) => {
-                return str.replace(/[.,\/#!$%\^&"'\*;:{}=\-_`~()]/g, "").replace(/\s/g, "").toLowerCase();
+                return str.replace(/[.,\/#!$%\^&"'\*;:{}=\-_`~()0]/g, "").replace(/\s/g, "").toLowerCase();
             };
 
             passphraseInput.addEventListener('keydown', (e) => {
