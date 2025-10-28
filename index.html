@@ -3,971 +3,646 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apostle Security Console</title>
-    <!-- Use Tailwind CSS for a clean, modern look -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Tone.js for simple audio generation without external files -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <title>Mystery Mansion - Lockout</title>
     <style>
+        :root {
+            --red: #ff0000;
+            --dark-red: #4d0000;
+            --font-color: #f0f0f0;
+            --text-color: #c0c0c0;
+            --bg-color: #1a1a1a;
+            --green: #00ff00;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
-        }
-        /* Custom scrollbar for a more futuristic look */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #1f2937; /* bg-gray-800 */
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #4b5563; /* bg-gray-600 */
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #6b7280; /* bg-gray-500 */
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+            color: var(--font-color);
+            background-color: var(--bg-color);
+            height: auto;
+            min-height: 100vh;
         }
 
-        /* CSS for the flashing effect on the timer */
-        @keyframes flashing {
-            0%, 100% {
-                background-color: #1f2937; /* bg-gray-800 */
-                box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); /* red-500 glow */
-            }
-            50% {
-                background-color: #374151; /* bg-gray-700 */
-                box-shadow: 0 0 30px rgba(239, 68, 68, 0.8);
-            }
-        }
-
-        .flashing {
-            animation: flashing 1s infinite;
-        }
-
-        /* Responsive sidebar classes for mobile slide-in */
-        .sidebar-menu {
-            transition: transform 0.3s ease-in-out;
-            transform: translateX(-100%);
-        }
-
-        .sidebar-menu.open {
-            transform: translateX(0);
-        }
-
-        /* Overlay for mobile view */
-        .overlay {
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100vw;
+            height: 100vh;
+            text-align: center;
+            box-sizing: border-box;
+            background: radial-gradient(circle, var(--red) 0%, var(--dark-red) 70%, var(--bg-color) 100%);
+            transition: all 0.5s ease-in-out;
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 40;
-            visibility: hidden;
-            opacity: 0;
-            transition: opacity 0.3s ease-in-out;
+            z-index: 100;
         }
 
-        .overlay.visible {
+        .container.banner {
+            height: 15vh;
+            justify-content: center;
+            background: radial-gradient(circle, var(--red) 0%, var(--dark-red) 100%);
+            border-bottom: 2px solid var(--red);
+            position: fixed;
+        }
+
+        /* New CSS class for the win banner */
+        .container.win-banner {
+            height: 15vh;
+            justify-content: center;
+            background: rgb(17, 24, 39);
+            border-bottom: 2px solid rgb(31, 41, 55);
+            position: fixed;
+        }
+
+        .system-locked-img {
+            max-width: 90%;
+            width: auto;
+            max-height: 80vh;
+            height: auto;
+            filter: drop-shadow(0 0 10px var(--red));
+            transition: max-height 0.5s ease-in-out, opacity 0.3s ease-in-out;
+            opacity: 1; /* Initial state */
+        }
+        
+        .container.banner .system-locked-img {
+            max-height: none;
+            height: 100%;
+        }
+
+        .system-locked-img.hidden {
+            opacity: 0;
+        }
+
+        .system-locked-img.fade-in {
+            opacity: 1;
+        }
+
+        .begin-link {
+            position: absolute;
+            bottom: 5vh;
+            text-decoration: none;
+            color: var(--font-color);
+            font-size: 2em;
+            cursor: pointer;
+            text-shadow: 0 0 5px var(--red);
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .begin-link:hover {
+            transform: scale(1.1);
+        }
+
+        .ransom-container {
+            width: 100%;
+            min-height: 100vh;
+            padding: calc(15vh + 2em) 2em 2em;
+            box-sizing: border-box;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            z-index: 1;
+            position: relative;
+        }
+
+        .ransom-container.active {
+            display: flex;
+        }
+        
+        .ransom-demands {
+            width: 100%;
+            max-width: 800px;
+            text-align: left;
+            margin-bottom: 2em;
+        }
+        
+        .ransom-demands h2 {
+            color: var(--red);
+            font-size: 2em;
+            text-shadow: 0 0 5px var(--red);
+        }
+
+        .ransom-demands p {
+            line-height: 1.5;
+            font-size: 1.1em;
+        }
+
+        #passphrase-input-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 1em;
+        }
+        
+        #passphrase-input-container.flash-red #passphrase-input {
+            animation: flashRed 0.6s 3;
+        }
+
+        #passphrase-input-container.flash-green #passphrase-input {
+            animation: flashGreen 0.6s 3;
+        }
+
+        #passphrase-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            background-color: var(--bg-color);
+            border: 2px solid var(--dark-red);
+            color: var(--font-color);
+            text-align: center;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+            transition: box-shadow 0.3s ease-in-out, border-color 0.3s;
+            outline: none;
+        }
+        
+        #passphrase-input:focus {
+            box-shadow: 0 0 15px var(--red);
+        }
+        
+        #passphrase-input::placeholder {
+            color: #555;
+        }
+        
+        @keyframes flashRed {
+            0%, 50%, 100% { border-color: var(--dark-red); box-shadow: 0 0 10px rgba(255, 0, 0, 0.5); }
+            25%, 75% { border-color: var(--red); box-shadow: 0 0 20px var(--red); }
+        }
+
+        @keyframes flashGreen {
+            0%, 50%, 100% { border-color: var(--dark-red); box-shadow: 0 0 10px rgba(255, 0, 0, 0.5); }
+            25%, 75% { border-color: var(--green); box-shadow: 0 0 20px var(--green); }
+        }
+
+        #attempts-counter {
+            color: var(--red);
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+            transition: color 0.3s, text-shadow 0.3s, visibility 0s 0.6s;
+        }
+        
+        #attempts-counter.hidden {
+            visibility: hidden;
+            transition: visibility 0s;
+        }
+
+        .forgot-passphrase-link {
+            margin-top: 1em;
+            color: var(--red);
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .forgot-passphrase-link:hover {
+            color: var(--font-color);
+        }
+
+        .clue-section {
+            width: 100%;
+            max-width: 800px;
+            margin-top: 2em;
+            display: none;
+            flex-direction: column;
+            gap: 1em;
+            overflow: hidden;
+            text-align: left;
+            padding: 0 1em;
+            box-sizing: border-box;
+        }
+
+        .clue-section.active {
+            display: flex;
+        }
+
+        .clue-section p {
+            font-size: 1em;
+            color: var(--text-color);
+            margin: 0;
+            text-align: center;
+        }
+        
+        .clue-boxes {
+            display: flex;
+            flex-direction: column;
+            gap: 1em;
+            margin-top: 1em;
+        }
+        
+        .clue-row {
+            display: flex;
+            justify-content: center;
+            gap: 1em;
+        }
+        
+        @media (max-width: 768px) {
+            .clue-row {
+                flex-direction: column;
+            }
+        }
+
+        .clue-box-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5em;
+            padding: 0 0.5em;
+        }
+
+        .clue-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 1.1em;
+            background-color: var(--bg-color);
+            border: 2px solid var(--dark-red);
+            color: var(--font-color);
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        
+        .clue-input.correct {
+            border-color: #00ff00;
+            box-shadow: 0 0 5px #00ff00;
+        }
+        
+        .clue-input.incorrect {
+            border-color: var(--red);
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(-5px); }
+            40% { transform: translateX(5px); }
+            60% { transform: translateX(-5px); }
+            80% { transform: translateX(5px); }
+            100% { transform: translateX(0); }
+        }
+
+        .revealed-clue {
+            color: var(--font-color);
+            text-align: center;
+            font-size: 1em;
+            margin-top: 0.5em;
+            min-height: 1.5em;
+            background-color: #222;
+            padding: 5px;
+            border-radius: 5px;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            width: 100%;
+            word-wrap: break-word;
+        }
+        
+        .revealed-clue.active {
             visibility: visible;
             opacity: 1;
         }
+
+        .final-screen {
+            position: fixed;
+            top: 15vh; /* This positions the screen below the banner */
+            left: 0;
+            width: 100vw;
+            height: 85vh; /* This adjusts the height to fill the remaining space */
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            /* Updated background color */
+            background-color: rgb(17, 24, 39); 
+            z-index: 200;
+        }
+
+        .final-screen.active {
+            display: flex;
+        }
+
+        .final-screen h2 {
+            font-size: 4em;
+            margin-bottom: 0.5em;
+        }
+        
+        .final-screen.win h2 {
+            color: #00ff00;
+            text-shadow: 0 0 15px #00ff00;
+        }
+        
+        .final-screen.fail h2 {
+            color: var(--red);
+            text-shadow: 0 0 15px var(--red);
+        }
+
+        .final-screen p {
+            font-size: 1.5em;
+            color: var(--text-color);
+        }
     </style>
 </head>
-<body class="bg-gray-950 text-gray-200 antialiased overflow-x-hidden">
+<body>
 
-    <!-- Mobile-only overlay -->
-    <div id="overlay" class="overlay"></div>
-
-    <div class="flex flex-col lg:flex-row h-screen">
-        <!-- Sidebar Menu - Now responsive and always visible on tablet/desktop -->
-        <aside id="sidebar-menu" class="fixed inset-y-0 left-0 w-64 bg-gray-900 border-r border-gray-800 p-4 flex flex-col z-50 overflow-y-auto lg:relative lg:flex lg:transform-none sidebar-menu">
-            <!-- Removed the "Zones" h2 from the top of the menu -->
-            <div id="zone-menu" class="space-y-4">
-                <!-- Zone menu items and new button will be generated here by JavaScript -->
-            </div>
-        </aside>
-
-        <!-- Main Content Panel -->
-        <main class="flex-1 flex flex-col p-4 md:p-8 bg-gray-900 overflow-y-auto">
-            <!-- Header section for titles. Now with a fixed height and border. -->
-            <header class="h-auto lg:h-32 bg-gray-950 p-3 mb-4 lg:mb-6 border-b-2 border-gray-700 flex flex-col lg:flex-row items-center lg:items-end lg:justify-between gap-4">
-                <!-- Mobile-only menu button -->
-                <button id="menu-btn" class="p-2 bg-gray-800 rounded-md shadow-lg lg:hidden self-start">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu text-gray-400"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
-                </button>
-                
-                <!-- This container now uses flex-1 and min-w-0 to allow the image to scale while preventing overflow. -->
-                <div class="flex-1 flex justify-center lg:justify-start min-w-0">
-                    <!-- The image now has a fixed height of h-28 on large screens -->
-                    <img src="apostlesecurity.png" alt="Apostle Security" class="h-16 lg:h-28 w-auto mb-2 lg:mb-0 rounded-md shadow-md lg:max-w-[600px]">
-                </div>
-
-                <!-- This container holds the title and now uses flex-none to ensure it only takes its required space, preventing it from wrapping. -->
-                <div class="flex-none flex justify-center lg:justify-end">
-                    <h2 id="zone-title" class="text-xl lg:text-2xl font-semibold text-gray-400 whitespace-nowrap">Access Grid Control</h2>
-                </div>
-            </header>
-            
-            <!-- Content area for zone instructions -->
-            <section id="zone-content" class="flex-1 bg-gray-800 p-4 lg:p-6 rounded-lg shadow-xl border border-gray-700 text-gray-300 leading-relaxed overflow-y-auto mt-4 lg:mt-6">
-                <!-- Security Sensor Active Note -->
-                <div id="sensor-active-note" class="p-4 rounded-lg border-2 border-red-500 bg-red-950/50 mb-4 hidden">
-                    <span class="text-xl font-semibold text-red-300" id="sensor-active-title">Security Sensor Active</span>
-                    <p id="challenge-note-text" class="mt-2 text-red-200"></p>
-                </div>
+    <div id="introScreen" class="container">
+        <img id="systemLockedImg" class="system-locked-img" src="systemlocked.png" alt="System Locked">
+        <a href="#" id="beginLink" class="begin-link">click to begin</a>
+    </div>
     
-                <!-- Security Sensor Disabled Note -->
-                <div id="sensor-disabled-note" class="p-4 rounded-lg border-2 border-green-500 bg-green-950/50 mb-4 hidden">
-                    <span class="text-xl font-semibold text-green-300" id="sensor-disabled-title">Security Sensor Disabled</span>
-                </div>
-    
-                <!-- Container for the main zone instructions -->
-                <div id="zone-instructions-text">
-                    <p>Select a security zone from the menu to the left to begin your operation. All systems are currently online and awaiting command. Proceed with caution and precision.</p>
-                </div>
-                
-                <div id="encrypted-intel-container" class="mt-6">
-                    <button id="toggle-intel-btn" class="flex items-center gap-2 text-sky-400 font-semibold text-sm px-4 py-2 rounded-full border border-sky-400 hover:bg-sky-900 transition-colors duration-200">
-                        <svg id="intel-chevron-down" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>
-                        <svg id="intel-chevron-right" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right hidden"><path d="m9 18 6-6-6-6"/></svg>
-                        Encrypted Intel
-                    </button>
-                    <div id="encrypted-intel-box" class="mt-4 p-4 rounded-lg bg-gray-800 border-2 border-sky-400 text-sky-200 hidden">
-                        <p id="encrypted-intel-text"></p>
+    <div id="ransomScreen" class="ransom-container">
+        <div class="ransom-demands">
+            <h2>Access Denied!</h2>
+            <p>You've triggered the system's security protocol. All data is now encrypted and on a timer. To regain control, you must provide the correct passphrase.</p>
+            <p>The passphrase is known only by a select few. You have one chance to enter it correctly. Incorrect entry will result in permanent data deletion.</p>
+            <p>Your team has gathered clues. Unscramble the phrases and piece together the final passphrase to save the data.</p>
+        </div>
+        <div id="passphrase-input-container">
+            <div id="attempts-counter">Attempts remaining: 3</div>
+            <input type="text" id="passphrase-input" placeholder="Enter passphrase and press enter...">
+        </div>
+        <a href="#" id="forgotPassphraseLink" class="forgot-passphrase-link">Forgot passphrase?</a>
+        <div id="clueSection" class="clue-section">
+            <p>Input the 8 security codes from the sensors below to reveal parts of the unlock phrase.</p>
+            <div id="clueBoxes" class="clue-boxes">
+                <div class="clue-row">
+                    <div class="clue-box-container">
+                        <input type="text" class="clue-input" placeholder="Code">
+                        <div class="revealed-clue"></div>
+                    </div>
+                    <div class="clue-box-container">
+                        <input type="text" class="clue-input" placeholder="Code">
+                        <div class="revealed-clue"></div>
+                    </div>
+                    <div class="clue-box-container">
+                        <input type="text" class="clue-input" placeholder="Code">
+                        <div class="revealed-clue"></div>
+                    </div>
+                    <div class="clue-box-container">
+                        <input type="text" class="clue-input" placeholder="Code">
+                        <div class="revealed-clue"></div>
                     </div>
                 </div>
-                
-                <div class="mt-8 text-center">
-                    <img id="main-image" src="https://placehold.co/400x200/273a4b/a1a1a9?text=OPERATIONAL+OVERVIEW" alt="Operational Overview" class="mx-auto rounded-lg shadow-md">
+                <div class="clue-row">
+                    <div class="clue-box-container">
+                        <input type="text" class="clue-input" placeholder="Code">
+                        <div class="revealed-clue"></div>
+                    </div>
+                    <div class="clue-box-container">
+                        <input type="text" class="clue-input" placeholder="Code">
+                        <div class="revealed-clue"></div>
+                    </div>
+                    <div class="clue-box-container">
+                        <input type="text" class="clue-input" placeholder="Code">
+                        <div class="revealed-clue"></div>
+                    </div>
+                    <div class="clue-box-container">
+                        <input type="text" class="clue-input" placeholder="Code">
+                        <div class="revealed-clue"></div>
+                    </div>
                 </div>
-            </section>
-
-            <!-- Spacer div to push the content up, preventing the footer from covering it -->
-            <div class="h-44 md:h-28"></div>
-        </main>
+            </div>
+        </div>
     </div>
 
-    <!-- Combined Footer with Timer and Code Input -->
-    <!-- The footer now centers both sections on mobile. -->
-    <footer class="fixed bottom-0 left-0 right-0 bg-gray-900 border-t-2 border-gray-800 p-4 flex flex-col lg:flex-row justify-center lg:justify-between items-center z-50 lg:left-64">
-        <!-- Code input container. Now centers content on mobile. -->
-        <div id="code-input-container" class="w-full lg:w-96 flex flex-col items-center lg:items-start justify-center lg:justify-start gap-2 mb-4 lg:mb-0 lg:mr-4">
-            <!-- Code input, button, and status message will be dynamically inserted here -->
-        </div>
+    <div id="winScreen" class="final-screen win">
+        <h2>System Unlocked!</h2>
+        <p>Thank you for playing Mystery Mansion - Lockout</p>
+    </div>
 
-        <!-- Timer section -->
-        <div id="timer-container" class="w-full bg-gray-800 border-2 border-gray-700 p-4 rounded-xl shadow-2xl flex items-center justify-center gap-4 transition-all duration-300 hover:scale-105 lg:w-auto">
-            <!-- Timer display. Double-click or long-press to edit. -->
-            <span id="timer-display" class="text-5xl font-mono font-bold text-blue-500 cursor-pointer">10:00</span>
-            <!-- Timer controls -->
-            <div class="flex items-center gap-2">
-                <!-- Play/Pause button -->
-                <button id="play-pause-btn" class="p-2 bg-gray-700 hover:bg-gray-600 rounded-full transition-colors duration-200">
-                    <!-- Play SVG -->
-                    <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" class="text-green-500"><path d="M3 22v-20l18 10-18 10z"/></svg>
-                    <!-- Pause SVG (Corrected to use two separate rectangle elements) -->
-                    <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" class="text-yellow-500 hidden">
-                        <rect x="6" y="4" width="4" height="16" />
-                        <rect x="14" y="4" width="4" height="16" />
-                    </svg>
-                </button>
-                <!-- Reset button (now with a refresh icon) -->
-                <button id="reset-btn" class="p-2 bg-gray-700 hover:bg-gray-600 rounded-full transition-colors duration-200">
-                    <!-- Refresh/Reset SVG (counter-clockwise) -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-ccw text-gray-400"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.96L1 10"/></svg>
-                </button>
-            </div>
-        </div>
-    </footer>
-    
+    <div id="failScreen" class="final-screen fail">
+        <h2>You Failed!</h2>
+        <p>Thank you for playing Mystery Mansion - Lockout</p>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // ===================================================================================================
-            // Escape Room Data and DOM References
-            // ===================================================================================================
+            const beginLink = document.getElementById('beginLink');
+            const introScreen = document.getElementById('introScreen');
+            const systemLockedImg = document.getElementById('systemLockedImg');
+            const ransomScreen = document.getElementById('ransomScreen');
+            const forgotPassphraseLink = document.getElementById('forgotPassphraseLink');
+            const clueSection = document.getElementById('clueSection');
+            const passphraseInputContainer = document.getElementById('passphrase-input-container');
+            const passphraseInput = document.getElementById('passphrase-input');
+            const attemptsCounter = document.getElementById('attempts-counter');
+            const winScreen = document.getElementById('winScreen');
+            const failScreen = document.getElementById('failScreen');
+            const clueBoxes = document.getElementById('clueBoxes');
 
-            // Array of objects to store data for each security zone. The first item is the overview.
-            // A 'status' property is added to each zone to track completion.
-            const zones = [
-                { 
-                    name: 'Overview', 
-                    instructions: 'Welcome to the Apostle Security Console. Your mission is to breach ten security zones to access the core data vault. Select a zone from the menu to begin. All systems are currently online and awaiting command. Proceed with caution and precision.', 
-                    image: 'https://placehold.co/400x200/273a4b/a1a1a9?text=OPERATIONAL+OVERVIEW', 
-                    status: 'home',
-                    encryptedIntel: null,
-                    correctCode: null // This zone does not require a code
-                },
-                { 
-                    name: 'SECURITY SENSORS', 
-                    sensorTitle: "Guard Patrols",
-                    instructions: '<p>The APOSTLE SECURITY Zonal Control Interface (ZCI) is the foundational element for comprehensive, multi-zone security management. Designed for adaptability and seamless integration, the ZCI provides a clear, localized interface for controlling and receiving feedback from a wide array of Apostle Security devices within any designated area (e.g., "ZONE 1"). Its robust design and universal communication protocols ensure it acts as the perfect localized command center, whether for high-security access points or complex, interactive security simulations.</p><br/><em>Disable/Bypass as many of the zone sensors as possible. This should make individual codes easier to obtain. To do this you’ll need to cut the power and then connect the right jumpers on each zone panel to disable the sensor for that zone. <br/><br/>The sensor power switch is in the locked security panel near the breakers. Find a key to that panel so you can cut the power to place your jumpers. <strong>ONLY apply jumpers when power is cut</strong>. You should be able to cut the power for up to 30 seconds at a time without drawing the guard’s attention<br/></em><br/><strong>Be sure to put everything you use back where you found it so the guards don\'t catch on!</strong><br/><br/>', 
-                    challengeNote: 'Listen for the guard as he may return to the station at any time.', 
-                    status: 'active', 
-                    userCode: '', 
-                    correctCode: null, // This zone no longer has a code to collect
-                    verified: false,
-                    encryptedIntel: '<ul style="list-style:inside;"><li>Joseph loses his keys so often, the other guards attached a key finder fob to them.</li><li>Remember you want to ensure all panel indicators turn <span style="color:green; font-weight:bold;">GREEN</span></li></ul>'
-                },
-                { 
-                    name: 'ZONE 1', 
-                    sensorTitle: 'Maglock Array',
-                    instructions: '<p style="margin-top: 12pt; margin-bottom: 12pt;"><span>The Apostle Security CE-730 Environmental Monitor is a </span><strong><span>state-of-the-art perimeter defense system</span></strong><span> engineered for the most demanding environments, including critical infrastructure, high-value asset storage, and restricted data centers. It utilizes</span><strong><span> proprietary multi-spectrum sensing technology</span></strong><span> to continuously analyze the atmospheric integrity of its operational zone. This advanced capability provides </span><strong><span>unparalleled situational awareness</span></strong><span>, precisely detecting unauthorized presence, tracking subtle environmental shifts, and identifying electronic tampering attempts in real-time.</span></p><p><em>You will need to manually retrieve the code without triggering the alarm.</em><p>', 
-                    challengeNote: 'Electro-magnetic detection active. Magnetic or Metalic devices will trigger alarm.', 
-                    status: 'active', 
-                    userCode: '', 
-                    correctCode: '1234', // Updated to a 4-digit code
-                    verified: false,
-                    encryptedIntel: 'The Line Technician can use their line to pull up the zone-code panel eyelet manually. Be mindful of tool choice based on sensor state.'
-                },
-                { 
-                    name: 'ZONE 2', 
-                    sensorTitle: 'Electrostat',
-                    instructions: '<p style="margin-top: 12pt; margin-bottom: 12pt;">The <strong>Keyed Cipher Panel (KCP)</strong> is the industry-leading solution for conditional access to encrypted data streams. Designed for high-security environments, the KCP encrypts data using the Pigpen cipher. This advanced cipher arranges letters on a grid and uses the borders of the grid along with dots to indicate each digit. The letter placement is random making this cipher difficult to break without the appropriate positional notation key. With the key, Apostle Security Cryptologists can troubleshoot by mapping the edgest of the grid displayed and using the dots to distinguish which digit-pair to use</p><p style="margin-top: 12pt; margin-bottom: 12pt;"><em>You will need to decrypt the message to retrieve the token code</em></p>', 
-                    challengeNote: 'The Electrostat is active, USB decryption devices will be destroyed', 
-                    status: 'active', 
-                    userCode: '', 
-                    correctCode: 'JOHN', 
-                    verified: false, 
-                    encryptedIntel: 'The Cryptographer should align each encrypted symbol with the grid on their decryption key and then pick the appropriate letter based on whether or not there is a dot. <em><strong>Do NOT</strong> use the USB Decryption Dongle unless the Electrostat has been bypassed' 
-                },
-                { 
-                    name: 'ZONE 3', 
-                    sensorTitle: 'Gyroscopic Limiter',
-                    instructions: '<p style="margin-top: 12pt; margin-bottom: 12pt;"><span>The </span><strong><span">Cipher-Array Console</span></strong><span"> is a ruggedized, field-deployable security interface engineered for high-stakes system decryption. It is designed to facilitate the rapid disengagement of four sequential security protocols, represented by the console&rsquo;s distinct </span><strong><em><span>Sentinel Array. </span></strong></p><p><em><span>The Gyro-Stabilizer must disable each array element using your single-use decryption cores</span></em></p>', 
-                    challengeNote: 'The Limiter is active, you can NOT user your D100', 
-                    status: 'active', 
-                    userCode: '', 
-                    correctCode: '0832', 
-                    verified: false, 
-                    encryptedIntel: '<p><strong>Procedure</strong></p><ol style="list-style:inside;"><li>Disable the sentinels in order, from left to right</li><li>For each Sentinel, you must use the specified dice.</li><li>The roll is final. There are no re-rolls.</li><li>After each roll, the dice used are permanently removed from your pool.</li><li><b>IF Gyroscoping Limiter is disabled</b>, You can add the d100 to any single roll you choose. Once used, it is also removed from the game.</li></ol><p><br/><br/></p>' 
-                },
-                { 
-                    name: 'ZONE 4', 
-                    sensorTitle: 'Tactile Sensors',
-                    instructions: '<p style="margin-top: 12pt; margin-bottom: 12pt;"><span>The Integrity Field Monitor is a next-generation perimeter defense system designed for the most critical data and asset protection scenarios. Engineered for environments where physical contact is a liability, the IFM creates an impenetrable, multi-layered security envelope around sensitive zones. Its primary function is to continuously verify the integrity of the protected area, detecting any unauthorized intrusion or manipulation.&nbsp;</span><span>When direct intervention is required&mdash;such as a system override or urgent data retrieval&mdash;the IFM necessitates a highly precise, </span><strong><span>zero-contact protocol</span></strong><span> to prevent triggering its advanced countermeasures.</span></p><p><em>The Remote Actuator(s) will need to retrieve the code from behind the secure locks without tripping the laser sensors.', 
-                    challengeNote: 'Touching the pressure plates surrounding the laser grid will result in an alarm', 
-                    status: 'active', 
-                    userCode: '', 
-                    correctCode: 'LUKE', // Updated to a 4-digit code
-                    verified: false, 
-                    encryptedIntel: 'The token code is protected by padlocks sequenced in rainbow order. Use the Pico Grip Actuators to remove the locks and reveal the digits' 
-                },
-                { 
-                    name: 'ZONE 5', 
-                    sensorTitle: 'Adaptive Matrix',
-                    instructions: '<p style="margin-top: 12pt; margin-bottom: 12pt;">The Dynamic Neural Interconnect (DNI) is a revolutionary self-regulating module designed to provide secure, adaptive, and redundant signal routing within critical infrastructure and high-value asset protection systems. Unlike static junction boxes, the DNI features an actively reconfigurable network that dynamically shifts primary and auxiliary signal paths, mitigating vulnerabilities and enhancing system resilience against intrusion and failure.</p><p><em>The Circuit Engineer will need to trace the approriate wires to reveal the token code.', 
-                    challengeNote: 'Analysis shows the RED circuits are currently active', 
-                    status: 'active', 
-                    userCode: '', 
-                    correctCode: '6741', 
-                    verified: false, 
-                    encryptedIntel: 'Use the Line Tracer Stylus to follow the live circuits, based on the state of the Adaptive Matrix. Follow the wires that match the zone state color (Green or Red)' 
-                },
-                { 
-                    name: 'ZONE 6', 
-                    sensorTitle: 'Biometric Cleaner',
-                    instructions: '<p style="margin-top: 12pt; margin-bottom: 12pt;"><span>The </span><strong><span>Trace Analyzer (BTA-500)</span></strong><span> boasts a </span><strong><span>Wall-Mount Ready Design</span></strong><span> with a sleek, low-profile form factor for seamless installation. It utilizes a </span><strong><span>High-Resolution Optical 1200 DPI</span></strong><span> sensor for multi-spectral skin and chemical analysis. Equipped with </span><strong><span>Indige-Spectra&trade; Imaging</span></strong><span> and </span><strong><span>IntelliScan&trade;: UV-Replication Pin and Covariants</span></strong><span>, the BTA-500 guarantees forensic-grade data capture. For integration, the unit supports both </span><strong><span>Network &amp; USB</span></strong><span> connectivity.</span></p><p><em>The Forensic Examiner should apply the proper trace sheet and the team should find and match the prints to reveal the token code', 
-                    challengeNote: 'You will need to use the High-yield Forensic trace sheet', 
-                    status: 'active', 
-                    userCode: '', 
-                    correctCode: 'MARK', 
-                    verified: false, 
-                    encryptedIntel: 'Search for fingerprint cards and match them up to the prints revealed by the trace sheet on the scanner. Use the High Yield sheet if the zone is red and the Standard sheet if it is green.' 
-                },
-                // --- New zones added below ---
-                { 
-                    name: 'ZONE 7', 
-                    sensorTitle: '',
-                    instructions: 'This sensor has not yet been setup. Once the sensor is installed and the token code is linked with the Zone Control Interface it will become active.', 
-                    challengeNote: '', 
-                    status: 'unset', 
-                    userCode: '', 
-                    correctCode: '1411', // Updated to a 4-digit code
-                    verified: false, 
-                    encryptedIntel: 'See the Zone Control Interface for the token code to sync upon setup' 
-                },
-                { 
-                    name: 'ZONE 8', 
-                    instructions: 'This sensor has not yet been setup. Once the sensor is installed and the token code is linked with the Zone Control Interface it will become active.', 
-                    challengeNote: '', 
-                    status: 'unset', 
-                    userCode: '', 
-                    correctCode: 'MARY', // Updated to a 4-digit code
-                    verified: false, 
-                    encryptedIntel: 'See the Zone Control Interface for the token code to sync upon setup. If the ZCI isn\'t initialized, perhaps there is an install schedule somewhere.' 
-                }
+            // The fixed codes that the player must enter
+            const fixedCodes = ["JOHN", "MARK", "LUKE", "MARY", "1411", "1234", "0832", "6741"];
+
+            // List of potential unlock phrases
+            const allPhrases = [
+                "When they heard him they were pleased and promised to pay him money. Mark 14:11",
+                "For where your treasure is, there also will your heart be. Luke 12:34",
+                "and you will know the truth, and the truth will set you free. John 08:32"
             ];
 
-            // Get references to DOM elements
-            const zoneMenu = document.getElementById('zone-menu');
-            const zoneTitleEl = document.getElementById('zone-title');
-            const zoneContentEl = document.getElementById('zone-content');
-            const zoneInstructionsTextEl = document.getElementById('zone-instructions-text');
-            const codeInputContainer = document.getElementById('code-input-container');
-            const sensorActiveNote = document.getElementById('sensor-active-note');
-            const sensorActiveTitle = document.getElementById('sensor-active-title');
-            const challengeNoteText = document.getElementById('challenge-note-text');
-            const sensorDisabledNote = document.getElementById('sensor-disabled-note');
-            const sensorDisabledTitle = document.getElementById('sensor-disabled-title');
-            const mainImageEl = document.getElementById('main-image');
-            const encryptedIntelContainer = document.getElementById('encrypted-intel-container');
-            const toggleIntelBtn = document.getElementById('toggle-intel-btn');
-            const intelBox = document.getElementById('encrypted-intel-box');
-            const intelText = document.getElementById('encrypted-intel-text');
-            const intelChevronDown = document.getElementById('intel-chevron-down');
-            const intelChevronRight = document.getElementById('intel-chevron-right');
-            const menuBtn = document.getElementById('menu-btn');
-            const sidebarMenu = document.getElementById('sidebar-menu');
-            const overlay = document.getElementById('overlay');
+            let correctPassphrase = "";
+            let shuffledClueMappings = [];
+            let usedCodes = new Set();
+            let attemptsRemaining = 3;
 
+            // Select a random phrase on load
+            const randomIndex = Math.floor(Math.random() * allPhrases.length);
+            const selectedPhrase = allPhrases[randomIndex];
+            correctPassphrase = selectedPhrase.toLowerCase();
 
-            // ===================================================================================================
-            // UI Generation
-            // ===================================================================================================
+            // Split the selected phrase into sections for the clues
+            const phraseParts = selectedPhrase.split(' ');
+            const numClues = fixedCodes.length;
+            const clues = [];
 
-            // Function to count completed zones and update the button
-            function updateCodesCollectedCount() {
-                // Count zones with a 'verified' status, which is the user's intent for the count
-                const completedCount = zones.filter(zone => zone.verified && zone.correctCode).length;
-                const totalZones = zones.filter(zone => zone.correctCode).length; // Only count zones that have a correctCode
-                const codesCollectedBtn = document.getElementById('codes-collected-btn');
-                if (codesCollectedBtn) {
-                    codesCollectedBtn.querySelector('span').textContent = `Codes (${completedCount}/${totalZones})`;
+            // A robust way to chunk the phrase into 8 clues
+            const totalWords = phraseParts.length;
+            const wordsPerClue = Math.floor(totalWords / numClues);
+            let remainder = totalWords % numClues;
+            let currentWordIndex = 0;
+
+            for (let i = 0; i < numClues; i++) {
+                let currentClue = '';
+                let wordsToTake = wordsPerClue;
+                if (remainder > 0) {
+                    wordsToTake++;
+                    remainder--;
                 }
-            }
-
-
-            // Function to generate the menu items dynamically
-            function renderZones() {
-                // Add the static Home link first
-                const homeItem = document.createElement('div');
-                homeItem.className = 'zone-item flex items-center p-3 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group';
-                homeItem.dataset.index = '0';
-                homeItem.innerHTML = `
-                    <div class="flex-1 flex items-center" data-action="display-content">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-home text-white mr-2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                        <span class="font-medium text-white group-hover:text-sky-300 transition-colors">Home</span>
-                    </div>
-                `;
-                zoneMenu.appendChild(homeItem);
-
-                // Add the new Codes Collected button
-                const codesCollectedBtn = document.createElement('button');
-                codesCollectedBtn.id = 'codes-collected-btn';
-                codesCollectedBtn.className = 'flex items-center p-3 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors cursor-pointer group w-full text-left';
-                codesCollectedBtn.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucude-clipboard-check text-white mr-2"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>
-                    <span class="font-medium text-white group-hover:text-sky-300 transition-colors">Codes (0/8)</span>
-                `;
-                zoneMenu.appendChild(codesCollectedBtn);
-                
-                // Add a visual separator
-                const separator = document.createElement('div');
-                separator.className = 'my-4 h-px bg-gray-700';
-                zoneMenu.appendChild(separator);
-
-                // Now loop through the rest of the zones (starting from index 1)
-                for (let index = 1; index < zones.length; index++) {
-                    const zone = zones[index];
-                    const zoneItem = document.createElement('div');
-                    zoneItem.className = 'zone-item flex items-center p-3 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors cursor-pointer group';
-                    zoneItem.dataset.index = index;
-                    
-                    // Set the initial status based on the zones array
-                    zoneItem.dataset.status = zone.status;
-
-                    // Determine circle color based on initial status
-                    var circleColorClass = zone.status === 'active' ? 'text-red-500' : 'text-green-500';
-                    if(zone.status === 'unset'){
-                        circleColorClass = 'text-yellow-500';
+                for (let j = 0; j < wordsToTake; j++) {
+                    if (currentWordIndex < totalWords) {
+                        currentClue += phraseParts[currentWordIndex] + ' ';
+                        currentWordIndex++;
                     }
-                    const nameColorClass = zone.verified ? 'text-green-500' : 'text-gray-300';
-
-                    zoneItem.innerHTML = `
-                        <!-- Left: Status Circle - this is the clickable part for toggling status -->
-                        <div class="p-1 rounded-full hover:bg-gray-600 transition-colors" data-action="toggle-status">
-                             <svg data-circle-id="${index}" class="w-4 h-4 transition-colors" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                <circle cx="12" cy="12" r="10" class="${circleColorClass}" />
-                            </svg>
-                        </div>
-                        
-                        <!-- Center and Right: Zone Name and Chevron - this is the clickable part for displaying content -->
-                        <div class="flex-1 flex items-center justify-between ml-4" data-action="display-content">
-                            <span class="font-medium ${nameColorClass} group-hover:text-white transition-colors flex-1">${zone.name}</span>
-                             <!-- Chevron icon without hover effect, as the parent div is clickable -->
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right text-gray-400">
-                                <path d="m9 18 6-6-6-6"/>
-                            </svg>
-                        </div>
-                    `;
-                    zoneMenu.appendChild(zoneItem);
+                    if (currentWordIndex >= totalWords) break;
                 }
+                clues.push(currentClue.trim());
             }
 
-            // Function to update the color of a specific zone's status circle in the sidebar
-            function updateZoneCircle(index, status) {
-                const zoneItem = document.querySelector(`.zone-item[data-index="${index}"]`);
-                if (zoneItem) {
-                    const circle = zoneItem.querySelector('circle');
-                    if (status === 'active') {
-                        circle.classList.remove('text-green-500');
-                        circle.classList.add('text-red-500');
-                    } else {
-                        circle.classList.remove('text-red-500');
-                        circle.classList.add('text-green-500');
-                    }
+            const clueMappings = fixedCodes.map((code, index) => ({
+                code: code.toLowerCase(),
+                clue: clues[index]
+            }));
+
+            // Shuffle the mappings so that each code reveals a random clue
+            const shuffleArray = (array) => {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
                 }
-            }
+                return array;
+            };
+
+            shuffledClueMappings = shuffleArray(clueMappings);
+
+            // Get all clue box containers and randomize their order
+            const allClueContainers = Array.from(document.querySelectorAll('.clue-box-container'));
+            const shuffledContainers = shuffleArray(allClueContainers);
             
-            // Function to update the color of a specific zone's name
-            function updateZoneNameColor(index, isVerified) {
-                const zoneItem = document.querySelector(`.zone-item[data-index="${index}"]`);
-                if (zoneItem) {
-                    const zoneNameSpan = zoneItem.querySelector('.font-medium');
-                    if (isVerified) {
-                        zoneNameSpan.classList.remove('text-gray-300');
-                        zoneNameSpan.classList.add('text-green-500');
-                    } else {
-                         zoneNameSpan.classList.remove('text-green-500');
-                        zoneNameSpan.classList.add('text-gray-300');
-                    }
-                }
-            }
+            // Get the parent element to re-append the shuffled containers to
+            const parentRow = clueBoxes.querySelector('.clue-row');
 
-            // ===================================================================================================
-            // Event Handlers for Menu and Code Input
-            // ===================================================================================================
+            // Clear the existing clue boxes
+            parentRow.innerHTML = '';
+            
+            // Re-append the shuffled containers to the DOM
+            shuffledContainers.forEach(container => {
+                parentRow.appendChild(container);
+            });
 
-            // A single delegated click listener for the entire zone menu
-            zoneMenu.addEventListener('click', (event) => {
-                const target = event.target;
-                
-                // Handle click on "Codes Collected" button
-                const codesCollectedBtn = target.closest('#codes-collected-btn');
-                if (codesCollectedBtn) {
-                    displayCollectedCodes();
-                    // Close the menu on mobile after selection
-                    if (window.innerWidth < 1024) { // Changed breakpoint from md to lg
-                        closeMenu();
-                    }
-                    return;
-                }
+            beginLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                beginLink.style.display = 'none';
 
-                const zoneItem = target.closest('.zone-item');
-                if (!zoneItem) {
-                    return;
-                }
+                // Add the banner class to start the container resize
+                introScreen.classList.add('banner');
 
-                const index = parseInt(zoneItem.dataset.index);
+                // Fade out the current image
+                systemLockedImg.classList.add('hidden');
 
-                // Handle click on the status toggle circle
-                const toggleStatusAction = target.closest('[data-action="toggle-status"]');
-                if (toggleStatusAction) {
-                    // Only toggle for non-overview zones
-                    if (index !== 0 && zones[index].status != 'unset') {
-                        const currentStatus = zones[index].status;
-                        const newStatus = currentStatus === 'active' ? 'complete' : 'active';
-                        zones[index].status = newStatus;
-                        updateZoneCircle(index, newStatus);
-                        // Update the sensor status display only if this zone is currently visible
-                        if (parseInt(zoneContentEl.dataset.zoneIndex) === index) {
-                            updateSensorStatusDisplay(index);
-                        }
-                    }
-                    return; // Stop here, we've handled the click
-                }
-                
-                // Handle click on the display content section (zone name and arrow)
-                const displayContentAction = target.closest('[data-action="display-content"]');
-                if (displayContentAction) {
-                    displayZoneContent(index);
-                    // Close the menu on mobile after selection
-                    if (window.innerWidth < 1024) { // Changed breakpoint from md to lg
-                        closeMenu();
-                    }
-                    return; // Stop here
-                }
+                // Listen for the fade-out transition to complete
+                const handleTransitionEnd = () => {
+                    // Replace the image source
+                    systemLockedImg.src = 'systemlockedsm.png';
+                    
+                    // Remove the hidden class and add the fade-in class
+                    systemLockedImg.classList.remove('hidden');
+                    systemLockedImg.classList.add('fade-in');
+
+                    // Activate the ransom screen
+                    ransomScreen.classList.add('active');
+
+                    // Remove the event listener to prevent it from firing again
+                    systemLockedImg.removeEventListener('transitionend', handleTransitionEnd);
+                };
+
+                systemLockedImg.addEventListener('transitionend', handleTransitionEnd);
+            });
+
+            forgotPassphraseLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                clueSection.classList.toggle('active');
             });
             
-            // Mobile menu toggle functionality
-            function openMenu() {
-                sidebarMenu.classList.add('open');
-                overlay.classList.add('visible');
-            }
+            // Function to normalize a string for comparison (lowercase, no spaces or punctuation)
+            const normalizeString = (str) => {
+                return str.replace(/[.,\/#!$%\^&"'\*;:{}=\-_`~()0]/g, "").replace(/\s/g, "").toLowerCase();
+            };
 
-            function closeMenu() {
-                sidebarMenu.classList.remove('open');
-                overlay.classList.remove('visible');
-            }
-            
-            menuBtn.addEventListener('click', openMenu);
-            overlay.addEventListener('click', closeMenu);
-
-
-            // Toggle Encrypted Intel Box
-            toggleIntelBtn.addEventListener('click', () => {
-                const isHidden = intelBox.classList.contains('hidden');
-                if (isHidden) {
-                    intelBox.classList.remove('hidden');
-                    intelChevronRight.classList.add('hidden');
-                    intelChevronDown.classList.remove('hidden');
-                } else {
-                    intelBox.classList.add('hidden');
-                    intelChevronDown.classList.add('hidden');
-                    intelChevronRight.classList.remove('hidden');
+            passphraseInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    // Normalize both the user's input and the correct passphrase before comparison
+                    if (normalizeString(passphraseInput.value) === normalizeString(correctPassphrase)) {
+                        passphraseInputContainer.classList.add('flash-green');
+                        setTimeout(() => {
+                            // Remove the old banner and add the new one
+                            introScreen.classList.remove('banner');
+                            introScreen.classList.add('win-banner');
+                            
+                            // Update the image
+                            systemLockedImg.src = 'apostlesecurity.png';
+                            systemLockedImg.style.maxHeight = '100%';
+                            systemLockedImg.style.filter = 'none';
+                            
+                            ransomScreen.style.display = 'none';
+                            winScreen.classList.add('active');
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 30000);
+                        }, 600);
+                    } else {
+                        attemptsRemaining--;
+                        attemptsCounter.classList.add('hidden');
+                        passphraseInputContainer.classList.add('flash-red');
+                        
+                        setTimeout(() => {
+                            attemptsCounter.textContent = `Attempts remaining: ${attemptsRemaining}`;
+                            attemptsCounter.classList.remove('hidden');
+                            passphraseInputContainer.classList.remove('flash-red');
+                            passphraseInput.value = '';
+                            if (attemptsRemaining <= 0) {
+                                // We keep the introScreen (banner) but hide the ransom screen
+                                ransomScreen.style.display = 'none';
+                                failScreen.classList.add('active');
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 30000);
+                            }
+                        }, 600);
+                    }
                 }
             });
-            
-            // Function to check the entered code against the correct code
-            function checkCode(index) {
-                const selectedZone = zones[index];
-                const messageEl = document.getElementById('code-message');
+
+            const clueInputs = document.querySelectorAll('.clue-input');
+
+            clueInputs.forEach((input) => {
+                const revealedClueDiv = input.nextElementSibling;
                 
-                // Collect the code from the individual inputs
-                const codeInputs = document.querySelectorAll('.code-input');
-                let enteredCode = '';
-                codeInputs.forEach(input => {
-                    enteredCode += input.value;
-                });
-                
-                if (!messageEl) return;
+                const checkCode = () => {
+                    const enteredCode = input.value.trim().toLowerCase();
 
-                const isCorrect = (enteredCode.toUpperCase() === selectedZone.correctCode.toUpperCase());
-
-                if (isCorrect) {
-                    // Success!
-                    selectedZone.verified = true;
-                    selectedZone.userCode = enteredCode;
-                    updateCodesCollectedCount();
-                    updateZoneNameColor(index, true); // Update the zone name color to green
-                    
-                    // Update UI elements for code input
-                    codeInputs.forEach(input => {
-                        input.disabled = true;
-                        input.classList.add('bg-gray-700', 'text-green-400');
-                    });
-                    const checkBtn = document.getElementById('check-code-btn');
-                    if (checkBtn) checkBtn.classList.add('hidden');
-
-                    messageEl.textContent = 'Code Accepted! Access Granted.';
-                    messageEl.classList.remove('text-red-400');
-                    messageEl.classList.add('text-green-400');
-                    
-                } else {
-                    // Failure
-                    messageEl.textContent = 'Invalid Code. Try Again.';
-                    messageEl.classList.remove('text-green-400');
-                    messageEl.classList.add('text-red-400');
-                    
-                    // Set focus back to the first one, but don't clear the inputs
-                    document.getElementById('code-input-1').focus();
-
-                    // Clear the message after a few seconds
-                    setTimeout(() => {
-                        messageEl.textContent = '';
-                    }, 3000);
-                }
-            }
-
-
-            // Function to display the content of a specific zone
-            function displayZoneContent(index) {
-                const selectedZone = zones[index];
-                zoneContentEl.dataset.zoneIndex = index; // Store the current zone index
-                // No longer need to update main title, as it's an image
-                zoneTitleEl.textContent = selectedZone.name;
-                
-                // Clear and create the code input field(s) if it's not the overview page and has a code
-                codeInputContainer.innerHTML = '';
-                if (index !== 0 && selectedZone.correctCode && selectedZone.correctCode.length > 0) {
-                    const isVerified = selectedZone.verified;
-                    const isDisabled = isVerified ? 'disabled' : '';
-                    const inputClass = isVerified ? 'bg-gray-700 text-green-400' : 'bg-gray-600 text-white';
-                    const codeLength = 4; // Force 4 input boxes
-
-                    // Use a flex container to keep the inputs and button inline
-                    const inputWrapper = document.createElement('div');
-                    inputWrapper.className = 'flex items-center gap-2';
-
-                    // Generate individual input fields for the code based on its length
-                    let inputHtml = `
-                        <label for="code-input-1" class="text-sm font-medium text-gray-400">Code:</label>
-                    `;
-                    const userCodeArr = selectedZone.userCode.split('');
-                    for (let i = 0; i < codeLength; i++) {
-                        inputHtml += `
-                            <input type="text" id="code-input-${i+1}" class="code-input w-10 text-center text-sm p-2 rounded-md border border-gray-500 focus:outline-none focus:ring-1 focus:ring-sky-400 ${inputClass}" maxlength="1" value="${userCodeArr[i] || ''}" ${isDisabled} data-index="${i+1}">
-                        `;
-                    }
-                    inputWrapper.innerHTML = inputHtml;
-                    codeInputContainer.appendChild(inputWrapper);
-
-                    // Add the "Check" button to the same flex container
-                    const checkBtn = document.createElement('button');
-                    checkBtn.id = 'check-code-btn';
-                    checkBtn.className = `p-2 px-4 bg-sky-600 hover:bg-sky-500 text-white rounded-md transition-colors duration-200 ${isVerified ? 'hidden' : ''}`;
-                    checkBtn.textContent = 'Check';
-                    inputWrapper.appendChild(checkBtn);
-                    
-                    // Add a message container for success/error feedback
-                    const messageDiv = document.createElement('div');
-                    messageDiv.id = 'code-message';
-                    messageDiv.className = 'text-sm font-semibold mt-2';
-                    codeInputContainer.appendChild(messageDiv);
-
-                    // Add event listeners for the input fields
-                    const codeInputs = document.querySelectorAll('.code-input');
-                    codeInputs.forEach(input => {
-                        // Event listener to select the text when an input is focused
-                        input.addEventListener('focus', (event) => {
-                            event.target.select();
-                        });
-
-                        // Event listener for moving focus and updating state
-                        input.addEventListener('input', (event) => {
-                            const value = event.target.value;
-                            const currentIndex = parseInt(event.target.dataset.index);
-
-                            // Concatenate the values to update the userCode state
-                            let currentCode = '';
-                            document.querySelectorAll('.code-input').forEach(input => {
-                                currentCode += input.value;
-                            });
-                            selectedZone.userCode = currentCode;
-
-                            // Move to the next input automatically
-                            if (value.length === 1 && currentIndex < codeLength) {
-                                document.getElementById(`code-input-${currentIndex + 1}`).focus();
-                            }
-                        });
-                        
-                        // Event listener for backspace to move focus to the previous input
-                        input.addEventListener('keydown', (event) => {
-                            const currentIndex = parseInt(event.target.dataset.index);
-                            if (event.key === 'Backspace' && event.target.value === '' && currentIndex > 1) {
-                                document.getElementById(`code-input-${currentIndex - 1}`).focus();
-                            }
-                        });
-                        
-                        // Event listener for the 'Enter' key press on any input field
-                        input.addEventListener('keypress', (event) => {
-                            if (event.key === 'Enter') {
-                                event.preventDefault(); // Prevents a potential form submission if a form existed
-                                checkCode(index);
-                            }
-                        });
-                    });
-                    
-                    // Add an event listener to the check button
-                    checkBtn.addEventListener('click', () => checkCode(index));
-                } else if (index !== 0) {
-                     // Display a message for zones that don't have a code
-                    codeInputContainer.innerHTML = '<p class="text-gray-400">This zone does not require a code.</p>';
-                }
-
-
-                zoneInstructionsTextEl.innerHTML = `<p>${selectedZone.instructions}</p>`;
-                
-                // Update the main image, if available
-                if (selectedZone.image) {
-                    mainImageEl.src = selectedZone.image;
-                    mainImageEl.classList.remove('hidden');
-                } else {
-                    mainImageEl.classList.add('hidden');
-                }
-
-                // Update the encrypted intel box
-                if (selectedZone.encryptedIntel) {
-                    intelText.innerHTML = selectedZone.encryptedIntel;
-                    encryptedIntelContainer.classList.remove('hidden');
-                    // Ensure the intel box is hidden by default and the arrow is correct
-                    intelBox.classList.add('hidden');
-                    intelChevronDown.classList.add('hidden');
-                    intelChevronRight.classList.remove('hidden');
-                } else {
-                    encryptedIntelContainer.classList.add('hidden');
-                }
-
-                // Update the sensor status based on the zone's status, but only for active zones
-                if (index !== 0) {
-                     updateSensorStatusDisplay(index);
-                } else {
-                    // Hide the sensor notes for the overview page
-                    sensorActiveNote.classList.add('hidden');
-                    sensorDisabledNote.classList.add('hidden');
-                }
-            }
-            
-            // Function to display collected codes
-            function displayCollectedCodes() {
-                // Set titles
-                // No longer need to update main title, as it's an image
-                zoneTitleEl.textContent = 'Collected Codes';
-
-                // Hide the code input and sensor notes
-                codeInputContainer.innerHTML = '';
-                sensorActiveNote.classList.add('hidden');
-                sensorDisabledNote.classList.add('hidden');
-                mainImageEl.classList.add('hidden');
-                encryptedIntelContainer.classList.add('hidden'); // Hide the new intel box
-                
-                // Generate the list of codes
-                let codesHtml = `<h3 class="text-xl font-bold mb-4">Codes for Completed Zones:</h3>`;
-                let foundCodes = false;
-                
-                zones.forEach(zone => {
-                    if (zone.verified && zone.correctCode) {
-                        foundCodes = true;
-                        codesHtml += `
-                            <div class="bg-gray-700 p-4 rounded-md mb-2 border border-gray-600">
-                                <span class="font-semibold text-sky-300">${zone.name}:</span>
-                                <span class="ml-2 font-mono text-white">${zone.userCode}</span>
-                            </div>
-                        `;
-                    }
-                });
-
-                if (!foundCodes) {
-                    codesHtml += `<p class="text-gray-400">No codes have been collected yet. Complete a zone and enter a code to see it here.</p>`;
-                }
-                
-                zoneInstructionsTextEl.innerHTML = codesHtml;
-            }
-
-            function updateSensorStatusDisplay(index) {
-                const selectedZone = zones[index];
-                
-                // Hide both notes initially
-                sensorActiveNote.classList.add('hidden');
-                sensorDisabledNote.classList.add('hidden');
-                
-                // For the overview page, do nothing.
-                if (index === 0) {
-                    return;
-                }
-
-                // Update the sensor title before showing the note
-                if (selectedZone.sensorTitle) {
-                    sensorActiveTitle.textContent = selectedZone.sensorTitle + ' Active';
-                    sensorDisabledTitle.textContent = selectedZone.sensorTitle + ' Disabled';
-                }
-                
-                // The status of the sensor note is now directly tied to the zone's status
-                if (selectedZone.status === 'active') {
-                    if (challengeNoteText) {
-                        challengeNoteText.textContent = selectedZone.challengeNote;
-                    }
-                    sensorActiveNote.classList.remove('hidden');
-                } else if (selectedZone.status == 'unset') {
-                    //null
-                } else {
-                    sensorDisabledNote.classList.remove('hidden');
-                }
-            }
-
-
-            // ===================================================================================================
-            // Timer Functionality
-            // ===================================================================================================
-
-            // Timer DOM elements
-            const timerContainer = document.getElementById('timer-container'); // Get the container for the flashing effect
-            const timerDisplay = document.getElementById('timer-display');
-            const playPauseBtn = document.getElementById('play-pause-btn');
-            const playIcon = document.getElementById('play-icon');
-            const pauseIcon = document.getElementById('pause-icon');
-            const resetBtn = document.getElementById('reset-btn');
-
-            // Timer state variables
-            let intervalId = null;
-            let remainingTime = 600; // Default to 10 minutes (600 seconds)
-            let isPaused = true;
-            let isBuzzerPlayed = false;
-            let originalTime = 600; // Store the original time for resets
-            let longPressTimeout; // Variable to hold the long press timeout ID
-            const longPressDuration = 500; // Duration in milliseconds for a long press
-
-            // Tone.js Synth for the buzzer sound
-            const synth = new Tone.Synth().toDestination();
-
-            // Function to format time as MM:SS
-            function formatTime(seconds) {
-                const minutes = Math.floor(seconds / 60);
-                const secs = seconds % 60;
-                return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-            }
-
-            // Function to update the timer display
-            function updateTimerDisplay() {
-                timerDisplay.textContent = formatTime(remainingTime);
-
-                // Handle color changes
-                timerDisplay.classList.remove('text-blue-500', 'text-yellow-500', 'text-red-500');
-                if (remainingTime > 180) { // 3 minutes = 180 seconds
-                    timerDisplay.classList.add('text-blue-500');
-                } else if (remainingTime > 60) { // 1 minute = 60 seconds
-                    timerDisplay.classList.add('text-yellow-500');
-                } else {
-                    timerDisplay.classList.add('text-red-500');
-                }
-
-                // Handle timer end and add flashing effect
-                if (remainingTime <= 0) {
-                    clearInterval(intervalId);
-                    intervalId = null;
-                    isPaused = true;
-                    playIcon.classList.remove('hidden');
-                    pauseIcon.classList.add('hidden');
-                    timerContainer.classList.add('flashing'); // Add the flashing class
-                    
-                    // Play the buzzer sound only once
-                    if (!isBuzzerPlayed) {
-                        synth.triggerAttackRelease("C2", "8n");
-                        isBuzzerPlayed = true;
-                    }
-                }
-            }
-
-            // Function to handle the play/pause button
-            function toggleTimer() {
-                // The first user interaction on the page must start the audio context
-                if (Tone.context.state !== 'running') {
-                    Tone.start();
-                }
-
-                if (isPaused) {
-                    // Start or resume timer
-                    if (remainingTime > 0) {
-                        isPaused = false;
-                        isBuzzerPlayed = false; // Reset buzzer status
-                        playIcon.classList.add('hidden');
-                        pauseIcon.classList.remove('hidden');
-                        timerContainer.classList.remove('flashing'); // Stop flashing when started
-                        intervalId = setInterval(() => {
-                            remainingTime--;
-                            updateTimerDisplay();
-                        }, 1000);
-                    }
-                } else {
-                    // Pause timer
-                    isPaused = true;
-                    playIcon.classList.remove('hidden');
-                    pauseIcon.classList.add('hidden');
-                    clearInterval(intervalId);
-                }
-            }
-
-            // Function to reset the timer to the original time
-            function resetTimer() {
-                clearInterval(intervalId);
-                isPaused = true; // Ensure it's paused before resetting
-                remainingTime = originalTime; // Use the stored original time
-                playIcon.classList.remove('hidden');
-                pauseIcon.classList.add('hidden');
-                timerContainer.classList.remove('flashing'); // Stop flashing on reset
-                updateTimerDisplay();
-                toggleTimer(); // Start the timer automatically after resetting
-            }
-            
-            // Function to open the timer edit dialog
-            function openTimerEditDialog() {
-                // Pause the timer if it's running, and store the state to restore later.
-                const wasRunning = !isPaused;
-                if (wasRunning) {
-                    toggleTimer();
-                }
-
-                // Create and configure an input field
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.value = formatTime(remainingTime);
-                input.className = 'w-full bg-gray-700 text-white font-mono text-5xl font-bold text-center border-none outline-none focus:ring-1 focus:ring-sky-400 rounded-lg';
-
-                // Temporarily replace the span with the input field
-                timerDisplay.replaceWith(input);
-                input.focus();
-                
-                // Define the function that will handle the blur and keypress events
-                const handleTimerUpdate = (e) => {
-                    if (e.type === 'keypress' && e.key !== 'Enter') {
-                        return; // Only process 'Enter' on keypress
-                    }
-
-                    // Guard against running multiple times due to race conditions
-                    if (input.parentNode === null) {
+                    if (usedCodes.has(enteredCode)) {
+                        input.classList.add('incorrect');
+                        setTimeout(() => {
+                            input.classList.remove('incorrect');
+                            input.value = '';
+                        }, 500);
                         return;
                     }
-                    
-                    // Parse the input value
-                    const [minutes, seconds] = input.value.split(':').map(Number);
-                    
-                    if (!isNaN(minutes) && !isNaN(seconds) && minutes >= 0 && seconds >= 0) {
-                        const newTime = (minutes * 60) + seconds;
-                        // Only update if the new time is different and valid
-                        if (newTime !== remainingTime) {
-                           remainingTime = newTime;
-                           originalTime = newTime; // Update the reset time
-                           updateTimerDisplay();
-                        }
+
+                    const foundClue = shuffledClueMappings.find(mapping => mapping.code === enteredCode);
+
+                    if (foundClue) {
+                        input.classList.add('correct');
+                        input.disabled = true;
+                        revealedClueDiv.textContent = foundClue.clue;
+                        revealedClueDiv.classList.add('active');
+                        input.value = foundClue.code.toUpperCase();
+                        usedCodes.add(enteredCode);
                     } else {
-                        // If invalid input, just restore the display without changing the time
-                        updateTimerDisplay();
-                    }
-
-                    // Remove the event listeners to prevent this function from running multiple times
-                    input.removeEventListener('blur', handleTimerUpdate);
-                    input.removeEventListener('keypress', handleTimerUpdate);
-                    
-                    // Replace the input back with the span.
-                    input.replaceWith(timerDisplay);
-
-                    // Resume the timer if it was running before we started editing
-                    if (wasRunning && remainingTime > 0) {
-                        toggleTimer();
+                        input.classList.add('incorrect');
+                        setTimeout(() => {
+                            input.classList.remove('incorrect');
+                            input.value = '';
+                        }, 500);
                     }
                 };
 
-                // Attach event listeners
-                input.addEventListener('blur', handleTimerUpdate);
-                input.addEventListener('keypress', handleTimerUpdate);
-            }
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        checkCode();
+                    }
+                });
 
-            // Event listeners for timer controls
-            playPauseBtn.addEventListener('click', toggleTimer);
-            resetBtn.addEventListener('click', resetTimer);
-
-            // Double-click event listener on the timer display for desktop
-            timerDisplay.addEventListener('dblclick', openTimerEditDialog);
-
-            // Long-press event listeners for mobile
-            timerDisplay.addEventListener('touchstart', (e) => {
-                // Prevent the default behavior which might cause a dblclick to be registered
-                e.preventDefault();
-                // Start the timer
-                longPressTimeout = setTimeout(() => {
-                    // This code runs if the touch is held for the longPressDuration
-                    openTimerEditDialog();
-                }, longPressDuration);
+                input.addEventListener('blur', checkCode);
             });
-
-            timerDisplay.addEventListener('touchend', () => {
-                // Clear the timer if the touch is released before the duration
-                clearTimeout(longPressTimeout);
-            });
-
-            timerDisplay.addEventListener('touchcancel', () => {
-                // Clear the timer if the touch is interrupted
-                clearTimeout(longPressTimeout);
-            });
-
-
-            // Initial render
-            renderZones();
-            // Call displayZoneContent for the first zone (Overview) to show its content on page load
-            displayZoneContent(0);
-            updateTimerDisplay();
-            updateCodesCollectedCount();
         });
     </script>
 </body>
